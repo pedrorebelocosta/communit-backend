@@ -2,7 +2,6 @@
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Slim\Factory\AppFactory;
-// use Firebase\JWT\JWT;
 
 require __DIR__ . '/vendor/autoload.php';
 
@@ -11,12 +10,13 @@ $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
 $app = AppFactory::create();
+$app->addBodyParsingMiddleware();
 
 $app->get('/', function (Request $request, Response $response, $args) {
-    require_once("db.php");
-    $users = $db->user()->select("*");
-    $response->getBody()->write(json_encode($users));
+    $response->getBody()->write("It works");
     return $response;
 });
+
+require_once('./controllers/AuthController.php');
 
 $app->run();
