@@ -41,3 +41,16 @@ $app->post('/auth', function (Request $request, Response $response, $args) {
 	$response->getBody()->write($responseBody);
 	return $response;
 });
+
+$app->post('/signup', function (Request $request, Response $response, $args) {
+	require_once("db.php");
+	$body = $request->getParsedBody();
+	if (!isset($body)) return $response->withStatus(400);
+	if (!(isset($body['email']) && isset($body['password']))) {
+		return $response->withStatus(400);
+	}
+	//	$foundUser = $db->user()("email = ?", $body['email'])->fetch();
+	$body["password"] = password_hash($body["password"], PASSWORD_DEFAULT);
+	$result = $db->user()->insert($body);
+	return $result ? $response->withStatus(201) : $response->withStatus(400);
+});
