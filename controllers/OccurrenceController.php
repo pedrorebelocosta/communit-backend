@@ -5,18 +5,21 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 
 $app->get('/occurrence', function (Request $request, Response $response, $args) {
 	require_once("db.php");
-	$result = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url");
+	$result = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url, is_road_problem");
 	$occurrences = iterator_to_array($result, false);
+	foreach($occurrences as $occurrence) {
+		$occurrence["is_road_problem"] = $occurrence["is_road_problem"] ? true : false;
+	}
 	$response->getBody()->write(json_encode($occurrences));
 	return $response->withStatus(200);
 });
 
 $app->get('/occurrence/{id}', function (Request $request, Response $response, $args) {
 	require_once("db.php");
-	$foundOccurrence = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url")
+	$foundOccurrence = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url, is_road_problem")
 										->where("id = ?", $args["id"])
 										->limit(1)[$args["id"]];
-	
+	$occurrence["is_road_problem"] = $occurrence["is_road_problem"] ? true : false;
 	$response->getBody()->write(json_encode($foundOccurrence));
 	return $foundOccurrence ? $response : $response->withStatus(404);
 });
@@ -38,7 +41,8 @@ $app->post('/occurrence', function (Request $request, Response $response, $args)
 		"user_id" => $foundUser["id"],
 		"description" => $reqBody["description"],
 		"geom" => new NotORM_Literal("Point(?,?)", $reqBody["lat"], $reqBody["lng"]),
-		"photo_url" => $reqBody["photoUrl"]
+		"photo_url" => $reqBody["photo_url"],
+		"is_road_problem" => $reqBody["is_road_problem"]
 	);
 	$result = $db->occurrence()->insert($newOccurrence);
 	return $result ? $response->withStatus(201) : $response->withStatus(400);
@@ -58,7 +62,7 @@ $app->put('/occurrence/{id}', function (Request $request, Response $response, $a
 		return $response;
 	}
 
-	$foundOccurrence = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url")
+	$foundOccurrence = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url, is_road_problem")
 										->where("id = ?", $args["id"])
 										->limit(1)[$args["id"]];
 
@@ -67,6 +71,7 @@ $app->put('/occurrence/{id}', function (Request $request, Response $response, $a
 
 	$foundOccurrence["description"] = $reqBody["description"] ?? $foundOccurrence["description"];
 	$foundOccurrence["photo_url"] = $reqBody["photo_url"] ?? $foundOccurrence["photo_url"];
+	$foundOccurence["is_road_problem"] = $reqBody["is_road_problem"] ?? $foundOccurence["is_road_problem"];
 	$foundOccurrence->update();
 	return $response->withStatus(200);
 });
@@ -75,7 +80,7 @@ $app->delete('/occurrence/{id}', function (Request $request, Response $response,
 	require_once("db.php");
 	$email = $request->getAttribute('token')["email"];
 	$foundUser = $db->user()("email = ?", $email)->fetch();
-	$foundOccurrence = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url")
+	$foundOccurrence = $db->occurrence()->select("id, user_id, description, ST_X(geom) as lat, ST_Y(geom) as lng, photo_url, is_road_problem")
 										->where("id = ?", $args["id"])
 										->limit(1)[$args["id"]];
 
