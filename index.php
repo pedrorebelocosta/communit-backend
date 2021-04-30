@@ -14,7 +14,7 @@ $app = AppFactory::create();
 
 // Add JWT Middleware to authenticate requests
 $app->add(new Tuupola\Middleware\JwtAuthentication([
-	"ignore" => ["/auth"],
+	"ignore" => ["/auth", "/signup"],
 	"secret" => $_ENV['SECRET_KEY'],
 	"rules" => [
 		new Tuupola\Middleware\JwtAuthentication\RequestPathRule([

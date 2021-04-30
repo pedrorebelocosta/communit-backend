@@ -15,10 +15,10 @@ $app->post('/auth', function (Request $request, Response $response, $args) {
 	if (!password_verify($body['password'], $foundUser['password'])) {
 		$responseBody = json_encode([
 			"authenticated" => false,
-			"status" => "Username and/or password incorrect",
+			"token" => null,
 		]);
 		$response->getBody()->write($responseBody);
-		return $response;
+		return $response->withStatus(403);
 	}
 
 	/*
@@ -30,14 +30,27 @@ $app->post('/auth', function (Request $request, Response $response, $args) {
 		"aud" => "com.cpe.communit:app",
 		"iat" => time(),
 		"exp" => strtotime("+1 year"),
+		"user_id" => $foundUser["id"],
 		"email" => $foundUser["email"],
 		"first_name" => $foundUser["firstname"],
 		"last_name" => $foundUser["lastname"]
 	);
 	$responseBody = json_encode([
 		"authenticated" => true,
-		"auth_token" => JWT::encode($payload, $_ENV['SECRET_KEY'])
+		"token" => JWT::encode($payload, $_ENV['SECRET_KEY'])
 	]);
 	$response->getBody()->write($responseBody);
 	return $response;
+});
+
+$app->post('/signup', function (Request $request, Response $response, $args) {
+	require_once("db.php");
+	$body = $request->getParsedBody();
+	if (!isset($body)) return $response->withStatus(400);
+	if (!(isset($body['email']) && isset($body['password']))) {
+		return $response->withStatus(400);
+	}
+	$body["password"] = password_hash($body["password"], PASSWORD_DEFAULT);
+	$result = $db->user()->insert($body);
+	return $result ? $response->withStatus(201) : $response->withStatus(400);
 });
