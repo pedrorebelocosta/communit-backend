@@ -5,6 +5,7 @@
         "vrana/notorm": "dev-master",
         "firebase/php-jwt": "^5.2",
         "vlucas/phpdotenv": "^5.3",
-        "tuupola/slim-jwt-auth": "^3.5"
+        "tuupola/slim-jwt-auth": "^3.5",
+        "php-di/php-di": "^6.3"
     }
 }
